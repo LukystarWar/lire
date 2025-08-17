@@ -35,6 +35,7 @@ export async function parseEpub(file: File): Promise<EpubData> {
             const parser = new DOMParser()
             const doc = parser.parseFromString(String(content), 'text/html')
             const textContent = doc.body?.textContent || ''
+            console.log('📄 Chapter content length:', textContent.length, 'preview:', textContent.substring(0, 100))
             
             if (textContent.trim()) {
               chapters.push({
@@ -42,6 +43,9 @@ export async function parseEpub(file: File): Promise<EpubData> {
                 content: textContent.trim(),
                 href: item.href
               })
+              console.log('✅ Added chapter:', item.title || `Chapter ${chapters.length}`)
+            } else {
+              console.log('⚠️ Empty chapter skipped:', item.href)
             }
           } catch (error) {
             console.warn(`Failed to load chapter ${item.href}:`, error)

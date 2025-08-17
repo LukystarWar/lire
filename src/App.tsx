@@ -110,6 +110,8 @@ export default function App() {
       if (type === 'CHUNKS_PROCESSED') {
         const chunks = payload.chunks
         console.log('✅ Chunks processed:', chunks.length)
+        console.log('✅ First chunk sample:', chunks[0]?.text?.substring(0, 100))
+        console.log('✅ Chunks durations:', chunks.slice(0, 3).map((c: any) => c.duration))
         setState(prev => ({
           ...prev,
           chunks,
@@ -146,7 +148,13 @@ export default function App() {
   }, [worker, state.settings.wpm])
 
   const handlePlayPause = useCallback(() => {
-    setState(prev => ({ ...prev, isPlaying: !prev.isPlaying }))
+    setState(prev => {
+      const newPlaying = !prev.isPlaying
+      console.log('🎮 Play/Pause clicked. New state:', newPlaying)
+      console.log('🎮 Current chunk index:', prev.currentChunkIndex)
+      console.log('🎮 Total chunks:', prev.chunks.length)
+      return { ...prev, isPlaying: newPlaying }
+    })
   }, [])
 
   const handleChunkComplete = useCallback(() => {

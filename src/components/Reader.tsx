@@ -22,15 +22,21 @@ export function Reader({
   const currentChunk = chunks[currentChunkIndex]
 
   useEffect(() => {
+    console.log('📺 Reader effect - chunk:', currentChunk?.id, 'playing:', isPlaying)
+    console.log('📺 Chunk text:', currentChunk?.text)
+    
     if (!currentChunk || !isPlaying) {
+      console.log('📺 Hiding subtitle - no chunk or not playing')
       setIsVisible(false)
       return
     }
 
+    console.log('📺 Showing chunk:', currentChunk.text.substring(0, 50), '... for', currentChunk.duration, 'ms')
     setDisplayText(currentChunk.text)
     setIsVisible(true)
 
     const timer = setTimeout(() => {
+      console.log('📺 Chunk timer finished, hiding')
       setIsVisible(false)
       setTimeout(() => {
         onChunkComplete()

@@ -85,14 +85,18 @@ export function processChapters(
   chapters: EpubChapter[], 
   timingConfig: TimingConfig
 ): TextChunk[] {
+  console.log('🔧 Processing chapters:', chapters.length)
   const allChunks: TextChunk[] = []
   let globalChunkIndex = 0
   
   chapters.forEach((chapter, chapterIndex) => {
+    console.log(`🔧 Chapter ${chapterIndex}: ${chapter.title}, content length: ${chapter.content.length}`)
     const textChunks = chunkText(chapter.content)
+    console.log(`🔧 Generated ${textChunks.length} chunks for chapter ${chapterIndex}`)
     
     textChunks.forEach((text, chunkIndex) => {
       const duration = calculateChunkDuration(text, timingConfig)
+      console.log(`🔧 Chunk ${globalChunkIndex}: "${text.substring(0, 50)}..." (${text.length} chars, ${duration}ms)`)
       
       allChunks.push({
         id: `${chapterIndex}-${chunkIndex}`,
@@ -106,5 +110,6 @@ export function processChapters(
     })
   })
   
+  console.log('🔧 Total chunks created:', allChunks.length)
   return allChunks
 }
