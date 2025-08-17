@@ -30,11 +30,47 @@ export async function parseEpub(file: File): Promise<EpubData> {
           try {
             const section = book.section(item.href)
             const content = await section.load((book as any).load.bind(book))
+            console.log('📄 Raw content type:', typeof content, 'constructor:', content?.constructor?.name)
             
-            // Extract text content from HTML
-            const parser = new DOMParser()
-            const doc = parser.parseFromString(String(content), 'text/html')
-            const textContent = doc.body?.textContent || ''
+            // Extract text content from HTML - handle different content types
+            let textContent = ''
+            
+            if (typeof content === 'string') {
+              console.log('📄 Content is string, length:', (content as string).length)
+              // If content is already a string (HTML)
+              const parser = new DOMParser()
+              const doc = parser.parseFromString(content, 'text/html')
+              textContent = doc.body?.textContent || doc.documentElement?.textContent || ''
+            } else if (content && typeof content === 'object') {
+              const contentAny = content as any
+              console.log('📄 Content is object, has textContent:', !!contentAny.textContent, 'has innerText:', !!contentAny.innerText)
+              // If content is a DOM element or Document
+              if (contentAny.textContent) {
+                textContent = contentAny.textContent
+                console.log('📄 Used textContent')
+              } else if (contentAny.innerText) {
+                textContent = contentAny.innerText
+                console.log('📄 Used innerText')
+              } else if (contentAny.outerHTML) {
+                console.log('📄 Using outerHTML')
+                // Parse the HTML string
+                const parser = new DOMParser()
+                const doc = parser.parseFromString(contentAny.outerHTML, 'text/html')
+                textContent = doc.body?.textContent || doc.documentElement?.textContent || ''
+              } else {
+                console.log('📄 Fallback: converting object to string')
+                // Try to convert to string and parse
+                const parser = new DOMParser()
+                const doc = parser.parseFromString(String(content), 'text/html')
+                textContent = doc.body?.textContent || doc.documentElement?.textContent || ''
+              }
+            } else {
+              console.log('📄 Using final fallback')
+              // Fallback: convert to string
+              const parser = new DOMParser()
+              const doc = parser.parseFromString(String(content), 'text/html')
+              textContent = doc.body?.textContent || doc.documentElement?.textContent || ''
+            }
             console.log('📄 Chapter content length:', textContent.length, 'preview:', textContent.substring(0, 100))
             
             if (textContent.trim()) {
