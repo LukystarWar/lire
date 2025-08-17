@@ -2,23 +2,29 @@ import ePub from 'epubjs'
 import type { EpubData, EpubChapter } from '../types'
 
 export async function parseEpub(file: File): Promise<EpubData> {
+  console.log('📖 Starting EPUB parsing for:', file.name, file.size, 'bytes')
+  
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     
     reader.onload = async (e) => {
       try {
+        console.log('📖 File loaded, creating EPUB object...')
         const arrayBuffer = e.target?.result as ArrayBuffer
         const book = ePub(arrayBuffer)
         
         await book.ready
+        console.log('📖 EPUB ready, extracting metadata...')
         
         const metadata = (book as any).package?.metadata || {}
         const title = metadata.title || 'Unknown Title'
         const author = metadata.creator || 'Unknown Author'
+        console.log('📖 Book:', title, 'by', author)
         
         const chapters: EpubChapter[] = []
         
         const spine = (book.spine as any).spineItems || []
+        console.log('📖 Found', spine.length, 'spine items')
         
         for (const item of spine) {
           try {

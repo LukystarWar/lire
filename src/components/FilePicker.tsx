@@ -5,6 +5,7 @@ import { parseEpub } from '../lib/epub'
 interface FilePickerProps {
   onFileLoaded: (epubData: EpubData) => void
   loading: boolean
+  error?: string | null
 }
 
 export function FilePicker({ onFileLoaded, loading }: FilePickerProps) {

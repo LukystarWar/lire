@@ -31,6 +31,7 @@ export default function App() {
   })
   
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [worker, setWorker] = useState<Worker | null>(null)
 
   // Initialize settings and worker
@@ -72,9 +73,17 @@ export default function App() {
   }, [state.settings])
 
   const handleFileLoaded = useCallback((epubData: EpubData) => {
-    if (!worker) return
+    console.log('📚 EPUB loaded:', epubData.title, 'by', epubData.author)
+    console.log('📖 Chapters:', epubData.chapters.length)
+    
+    if (!worker) {
+      console.error('❌ Worker not available')
+      setError('Worker not initialized')
+      return
+    }
     
     setLoading(true)
+    setError(null)
     setState(prev => ({ 
       ...prev, 
       epubData,
@@ -94,11 +103,13 @@ export default function App() {
       }
     }
 
-    const handleWorkerMessage = (event: MessageEvent<ChunkerResponse>) => {
+    const handleWorkerMessage = (event: MessageEvent<ChunkerResponse | any>) => {
+      console.log('📨 Worker message:', event.data)
       const { type, payload } = event.data
       
       if (type === 'CHUNKS_PROCESSED') {
         const chunks = payload.chunks
+        console.log('✅ Chunks processed:', chunks.length)
         setState(prev => ({
           ...prev,
           chunks,
@@ -110,10 +121,27 @@ export default function App() {
         }))
         setLoading(false)
         worker.removeEventListener('message', handleWorkerMessage)
+        worker.removeEventListener('error', handleWorkerError)
+      } else if (type === 'ERROR') {
+        console.error('❌ Worker error:', payload.error)
+        setError(payload.error)
+        setLoading(false)
+        worker.removeEventListener('message', handleWorkerMessage)
+        worker.removeEventListener('error', handleWorkerError)
       }
     }
 
+    const handleWorkerError = (error: ErrorEvent) => {
+      console.error('❌ Worker error event:', error)
+      setError(`Worker error: ${error.message}`)
+      setLoading(false)
+      worker.removeEventListener('message', handleWorkerMessage)
+      worker.removeEventListener('error', handleWorkerError)
+    }
+
+    console.log('🚀 Starting chunking process...')
     worker.addEventListener('message', handleWorkerMessage)
+    worker.addEventListener('error', handleWorkerError)
     worker.postMessage(message)
   }, [worker, state.settings.wpm])
 
@@ -211,6 +239,14 @@ export default function App() {
       </header>
 
       <main className="main">
+        {error && (
+          <div className="error-message">
+            <h3>❌ Error</h3>
+            <p>{error}</p>
+            <button onClick={() => setError(null)}>Try Again</button>
+          </div>
+        )}
+        
         {!state.epubData ? (
           <FilePicker onFileLoaded={handleFileLoaded} loading={loading} />
         ) : (
