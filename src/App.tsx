@@ -1,0 +1,245 @@
+import { useState, useEffect, useCallback } from 'react'
+import { FilePicker } from './components/FilePicker'
+import { Reader } from './components/Reader'
+import { Controls } from './components/Controls'
+import { createChunkerWorker } from './lib/chunker'
+import { saveSettings, loadSettings, saveProgress, loadProgress } from './lib/storage'
+import type { 
+  EpubData, 
+  ReaderSettings, 
+  AppState 
+} from './types'
+import type { ChunkerMessage, ChunkerResponse } from './workers/chunker.worker'
+import './app.css'
+
+export default function App() {
+  const [state, setState] = useState<AppState>({
+    epubData: null,
+    chunks: [],
+    currentChunkIndex: 0,
+    isPlaying: false,
+    settings: {
+      wpm: 250,
+      fontSize: 24,
+      theme: 'dark'
+    },
+    progress: {
+      currentChapterIndex: 0,
+      currentChunkIndex: 0,
+      totalChunks: 0
+    }
+  })
+  
+  const [loading, setLoading] = useState(false)
+  const [worker, setWorker] = useState<Worker | null>(null)
+
+  // Initialize settings and worker
+  useEffect(() => {
+    const init = async () => {
+      const settings = await loadSettings()
+      setState(prev => ({ ...prev, settings }))
+      
+      const chunkerWorker = createChunkerWorker()
+      setWorker(chunkerWorker)
+      
+      return () => chunkerWorker.terminate()
+    }
+    
+    init()
+  }, [])
+
+  // Load saved progress when chunks are available
+  useEffect(() => {
+    if (state.chunks.length > 0) {
+      loadProgress().then(progress => {
+        if (progress) {
+          setState(prev => ({
+            ...prev,
+            currentChunkIndex: progress.currentChunkIndex,
+            progress: {
+              ...progress,
+              totalChunks: state.chunks.length
+            }
+          }))
+        }
+      })
+    }
+  }, [state.chunks.length])
+
+  // Save settings when they change
+  useEffect(() => {
+    saveSettings(state.settings)
+  }, [state.settings])
+
+  const handleFileLoaded = useCallback((epubData: EpubData) => {
+    if (!worker) return
+    
+    setLoading(true)
+    setState(prev => ({ 
+      ...prev, 
+      epubData,
+      currentChunkIndex: 0,
+      isPlaying: false
+    }))
+
+    const message: ChunkerMessage = {
+      type: 'PROCESS_CHAPTERS',
+      payload: {
+        chapters: epubData.chapters,
+        timingConfig: {
+          wpm: state.settings.wpm,
+          minDuration: 900,
+          maxDuration: 6000
+        }
+      }
+    }
+
+    const handleWorkerMessage = (event: MessageEvent<ChunkerResponse>) => {
+      const { type, payload } = event.data
+      
+      if (type === 'CHUNKS_PROCESSED') {
+        const chunks = payload.chunks
+        setState(prev => ({
+          ...prev,
+          chunks,
+          progress: {
+            currentChapterIndex: 0,
+            currentChunkIndex: 0,
+            totalChunks: chunks.length
+          }
+        }))
+        setLoading(false)
+        worker.removeEventListener('message', handleWorkerMessage)
+      }
+    }
+
+    worker.addEventListener('message', handleWorkerMessage)
+    worker.postMessage(message)
+  }, [worker, state.settings.wpm])
+
+  const handlePlayPause = useCallback(() => {
+    setState(prev => ({ ...prev, isPlaying: !prev.isPlaying }))
+  }, [])
+
+  const handleChunkComplete = useCallback(() => {
+    setState(prev => {
+      const nextIndex = prev.currentChunkIndex + 1
+      const newChunk = prev.chunks[nextIndex]
+      
+      if (nextIndex >= prev.chunks.length) {
+        // End of book
+        return { ...prev, isPlaying: false }
+      }
+      
+      const newProgress = {
+        currentChapterIndex: newChunk?.chapterIndex || 0,
+        currentChunkIndex: nextIndex,
+        totalChunks: prev.chunks.length
+      }
+      
+      // Save progress
+      saveProgress(newProgress)
+      
+      return {
+        ...prev,
+        currentChunkIndex: nextIndex,
+        progress: newProgress
+      }
+    })
+  }, [])
+
+  const handleSettingsChange = useCallback((settings: ReaderSettings) => {
+    setState(prev => ({ ...prev, settings }))
+  }, [])
+
+  const handlePreviousChunk = useCallback(() => {
+    setState(prev => {
+      const prevIndex = Math.max(0, prev.currentChunkIndex - 1)
+      const chunk = prev.chunks[prevIndex]
+      
+      const newProgress = {
+        currentChapterIndex: chunk?.chapterIndex || 0,
+        currentChunkIndex: prevIndex,
+        totalChunks: prev.chunks.length
+      }
+      
+      saveProgress(newProgress)
+      
+      return {
+        ...prev,
+        currentChunkIndex: prevIndex,
+        progress: newProgress,
+        isPlaying: false
+      }
+    })
+  }, [])
+
+  const handleNextChunk = useCallback(() => {
+    setState(prev => {
+      const nextIndex = Math.min(prev.chunks.length - 1, prev.currentChunkIndex + 1)
+      const chunk = prev.chunks[nextIndex]
+      
+      const newProgress = {
+        currentChapterIndex: chunk?.chapterIndex || 0,
+        currentChunkIndex: nextIndex,
+        totalChunks: prev.chunks.length
+      }
+      
+      saveProgress(newProgress)
+      
+      return {
+        ...prev,
+        currentChunkIndex: nextIndex,
+        progress: newProgress,
+        isPlaying: false
+      }
+    })
+  }, [])
+
+  const currentChunk = state.chunks[state.currentChunkIndex]
+
+  return (
+    <div className="app">
+      <header className="header">
+        <h1>lire</h1>
+        {state.epubData && (
+          <div className="book-info">
+            <h2>{state.epubData.title}</h2>
+            <p>by {state.epubData.author}</p>
+          </div>
+        )}
+      </header>
+
+      <main className="main">
+        {!state.epubData ? (
+          <FilePicker onFileLoaded={handleFileLoaded} loading={loading} />
+        ) : (
+          <>
+            <Reader
+              chunks={state.chunks}
+              currentChunkIndex={state.currentChunkIndex}
+              fontSize={state.settings.fontSize}
+              isPlaying={state.isPlaying}
+              onChunkComplete={handleChunkComplete}
+            />
+            
+            <Controls
+              isPlaying={state.isPlaying}
+              settings={state.settings}
+              progress={state.progress}
+              currentChunkText={currentChunk?.text}
+              onPlayPause={handlePlayPause}
+              onSettingsChange={handleSettingsChange}
+              onPreviousChunk={handlePreviousChunk}
+              onNextChunk={handleNextChunk}
+            />
+          </>
+        )}
+      </main>
+
+      <footer className="footer">
+        <p>Processing happens entirely in your browser</p>
+      </footer>
+    </div>
+  )
+}
