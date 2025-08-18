@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { FilePicker } from './components/FilePicker'
 import { Reader } from './components/Reader'
 import { Controls } from './components/Controls'
@@ -33,6 +33,8 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [worker, setWorker] = useState<Worker | null>(null)
+  const [headerVisible, setHeaderVisible] = useState(true)
+  const headerTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Initialize settings and worker
   useEffect(() => {
@@ -147,6 +149,31 @@ export default function App() {
     worker.postMessage(message)
   }, [worker, state.settings.wpm])
 
+  // Auto-hide header logic
+  const resetHeaderTimer = useCallback(() => {
+    if (headerTimeoutRef.current) {
+      clearTimeout(headerTimeoutRef.current)
+    }
+    
+    setHeaderVisible(true)
+    
+    if (state.isPlaying && state.epubData) {
+      headerTimeoutRef.current = setTimeout(() => {
+        setHeaderVisible(false)
+      }, 3000) // Hide after 3 seconds
+    }
+  }, [state.isPlaying, state.epubData])
+
+  // Reset timer when playing state changes or user interacts
+  useEffect(() => {
+    resetHeaderTimer()
+    return () => {
+      if (headerTimeoutRef.current) {
+        clearTimeout(headerTimeoutRef.current)
+      }
+    }
+  }, [resetHeaderTimer])
+
   const handlePlayPause = useCallback(() => {
     setState(prev => {
       const newPlaying = !prev.isPlaying
@@ -235,8 +262,8 @@ export default function App() {
   const currentChunk = state.chunks[state.currentChunkIndex]
 
   return (
-    <div className="app">
-      <header className="header">
+    <div className="app" onClick={resetHeaderTimer}>
+      <header className={`header ${!headerVisible ? 'hidden' : ''}`}>
         <h1>lire</h1>
         {state.epubData && (
           <div className="book-info">

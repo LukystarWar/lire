@@ -30,6 +30,12 @@ html, body {
   border-bottom: 1px solid #333;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.header.hidden {
+  transform: translateY(-100%);
+  opacity: 0;
 }
 
 .header h1 {
@@ -130,7 +136,7 @@ html, body {
 /* Reader */
 .reader {
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 0;
   right: 0;
   transform: translateY(-50%);
@@ -380,6 +386,10 @@ html, body {
     font-size: 0.8rem;
   }
   
+  .reader {
+    top: 35%;
+  }
+  
   .drop-zone {
     width: 350px;
     padding: 2rem 1.5rem;
@@ -474,6 +484,10 @@ html, body {
   
   .book-info p {
     font-size: 0.7rem;
+  }
+  
+  .reader {
+    top: 30%;
   }
   
   .subtitle {
