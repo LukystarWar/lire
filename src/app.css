@@ -446,3 +446,53 @@ html, body {
     font-size: 0.8rem;
   }
 }
+
+/* Landscape mobile optimizations */
+@media (max-height: 500px) and (orientation: landscape) {
+  .header {
+    padding: 0.25rem 1rem;
+  }
+  
+  .header h1 {
+    font-size: 1rem;
+    margin-bottom: 0.125rem;
+  }
+  
+  .book-info h2 {
+    font-size: 0.9rem;
+    margin-bottom: 0.0625rem;
+  }
+  
+  .book-info p {
+    font-size: 0.7rem;
+  }
+  
+  .settings-controls {
+    display: none;
+  }
+  
+  .controls {
+    padding: 0.5rem;
+  }
+  
+  .control-buttons {
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .control-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .play-pause-btn {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .progress-info {
+    margin-bottom: 0.5rem;
+    font-size: 0.7rem;
+  }
+}
