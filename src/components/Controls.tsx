@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { ReaderSettings, ReadingProgress } from '../types'
 import { clamp } from '../lib/utils'
 
@@ -22,6 +23,7 @@ export function Controls({
   onNextChunk,
   currentChunkText
 }: ControlsProps) {
+  const [showSettings, setShowSettings] = useState(false)
   const handleWpmChange = (delta: number) => {
     const newWpm = clamp(settings.wpm + delta, 100, 1000)
     onSettingsChange({ ...settings, wpm: newWpm })
@@ -82,9 +84,17 @@ export function Controls({
         >
           ⏭
         </button>
+        
+        <button 
+          className="control-btn settings-toggle-btn"
+          onClick={() => setShowSettings(!showSettings)}
+          title="Settings"
+        >
+          ⚙
+        </button>
       </div>
 
-      <div className="settings-controls">
+      <div className={`settings-controls ${showSettings ? 'mobile-visible' : ''}`}>
         <div className="setting-group">
           <label>WPM</label>
           <div className="setting-buttons">
