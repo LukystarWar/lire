@@ -34,7 +34,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [worker, setWorker] = useState<Worker | null>(null)
   const [headerVisible, setHeaderVisible] = useState(true)
-  const headerTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const headerTimeoutRef = useRef<number | null>(null)
 
   // Initialize settings and worker
   useEffect(() => {
