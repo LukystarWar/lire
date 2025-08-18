@@ -130,7 +130,7 @@ html, body {
 /* Reader */
 .reader {
   position: absolute;
-  bottom: 120px;
+  bottom: 180px;
   left: 0;
   right: 0;
   pointer-events: none;
@@ -139,16 +139,17 @@ html, body {
 .subtitle {
   position: relative;
   margin: 0 auto;
-  max-width: 90%;
-  padding: 1rem 2rem;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
+  max-width: 85%;
+  padding: 1.5rem 2.5rem;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(15px);
+  border-radius: 12px;
   text-align: center;
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .subtitle.visible {
@@ -157,10 +158,11 @@ html, body {
 }
 
 .subtitle-text {
-  line-height: 1.4;
+  line-height: 1.6;
   font-weight: 400;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  max-height: 3.2em;
+  font-size: 1.3em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+  max-height: 4em;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -379,7 +381,15 @@ html, body {
   
   .subtitle {
     margin: 0 1rem;
-    padding: 0.75rem 1.5rem;
+    padding: 1rem 1.5rem;
+  }
+  
+  .subtitle-text {
+    font-size: 1.1em;
+  }
+  
+  .reader {
+    bottom: 160px;
   }
   
   .controls {
