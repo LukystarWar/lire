@@ -359,11 +359,21 @@ html, body {
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .header {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
   }
   
   .header h1 {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .book-info h2 {
+    font-size: 1rem;
+    margin-bottom: 0.125rem;
+  }
+  
+  .book-info p {
+    font-size: 0.8rem;
   }
   
   .drop-zone {
@@ -387,11 +397,12 @@ html, body {
   }
   
   .settings-controls {
-    gap: 1.5rem;
+    display: none;
   }
   
   .control-buttons {
     gap: 0.75rem;
+    margin-bottom: 0.5rem;
   }
   
   .control-btn {
